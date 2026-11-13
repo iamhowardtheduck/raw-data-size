@@ -10,6 +10,8 @@ An ingest pipeline stamps every document with `raw.size`, a transform keeps the 
  Stack Monitoring index metrics ──► transform ──► monitoring-latest-lookup ───┘
 ```
 
+![Data Fidelity dashboard](images/data-fidelity-dashboard.png)
+
 ## What's in here
 
 | Path | What it is |
@@ -19,6 +21,7 @@ An ingest pipeline stamps every document with `raw.size`, a transform keeps the 
 | `transform/monitoring-latest-lookup.index.json` | Destination index for the transform, created in `lookup` mode |
 | `transform/monitoring_index_latest.json` | Continuous transform: latest primary store size and bulk size per index |
 | `kibana/data-fidelity-dashboard.ndjson` | Dashboard "Data Fidelity (Raw Size VS Index Primary Size)" with its Lens panels, data views and tag |
+| `images/data-fidelity-dashboard.png` | Screenshot of the dashboard |
 | `setup.sh` | Installs all of the above with `curl` |
 
 ## Requirements
