@@ -5,7 +5,7 @@ Measure how big your data was **before** Elasticsearch touched it, and compare t
 An ingest pipeline stamps every document with `raw.size`, a transform keeps the latest per-index store and bulk sizes from Stack Monitoring in a lookup index, and a Kibana dashboard joins the two with ES|QL to show enrichment overhead, compression, and storage efficiency per index.
 
 ```
- source event ──► raw-size ingest pipeline ──► raw.size on every doc ─────────┐
+ source event ──► event_original_size pipeline ──► raw.size on every doc ─────────┐
                                                                               ├─► ES|QL LOOKUP JOIN ─► dashboard
  Stack Monitoring index metrics ──► transform ──► monitoring-latest-lookup ───┘
 ```
@@ -14,7 +14,8 @@ An ingest pipeline stamps every document with `raw.size`, a transform keeps the 
 
 | Path | What it is |
 | --- | --- |
-| `ingest-pipeline/raw-size.json` | Ingest pipeline that sets `raw.size` |
+| `ingest-pipeline/event_original_size.json` | Ingest pipeline that sets `raw.size` |
+| `component-template/logs@custom.json` | Maps `raw.size` as `long` and makes the pipeline the default for `logs-*-*` data streams |
 | `transform/monitoring-latest-lookup.index.json` | Destination index for the transform, created in `lookup` mode |
 | `transform/monitoring_index_latest.json` | Continuous transform: latest primary store size and bulk size per index |
 | `kibana/data-fidelity-dashboard.ndjson` | Dashboard "Data Fidelity (Raw Size VS Index Primary Size)" with its Lens panels, data views and tag |
@@ -55,8 +56,8 @@ API_KEY=<encoded api key> \
 1. **Pipeline** — Dev Tools:
 
    ```
-   PUT _ingest/pipeline/raw-size
-   { ...contents of ingest-pipeline/raw-size.json... }
+   PUT _ingest/pipeline/event_original_size
+   { ...contents of ingest-pipeline/event_original_size.json... }
    ```
 
 2. **Lookup index** — create it *before* the transform. If the transform creates it, it won't be in `lookup` mode and the dashboard's `LOOKUP JOIN` fails.
@@ -75,31 +76,42 @@ API_KEY=<encoded api key> \
    POST _transform/monitoring_index_latest/_start
    ```
 
-4. **Dashboard** — Kibana → Stack Management → Saved Objects → Import → `kibana/data-fidelity-dashboard.ndjson`.
+4. **Component template** — see [Attach the pipeline to your data](#attach-the-pipeline-to-your-data).
+
+5. **Dashboard** — Kibana → Stack Management → Saved Objects → Import → `kibana/data-fidelity-dashboard.ndjson`.
 
 ### Attach the pipeline to your data
 
-The pipeline does nothing until documents pass through it. Two common ways:
-
-Call it from the `@custom` hook for a data stream type or dataset:
+The pipeline does nothing until documents pass through it. `component-template/logs@custom.json` wires it into every `logs-*-*` data stream:
 
 ```
-PUT _ingest/pipeline/logs@custom
-{
-  "processors": [
-    { "pipeline": { "name": "raw-size", "ignore_missing_pipeline": true } }
-  ]
-}
+PUT _component_template/logs@custom
+{ ...contents of component-template/logs@custom.json... }
 ```
 
-Or set it as the default or final pipeline on an index or template:
+It does four things:
 
-```
-PUT my-index/_settings
-{ "index.final_pipeline": "raw-size" }
-```
+- maps `raw.size` as `long`
+- sets `index.default_pipeline` to `event_original_size`
+- sets `index.mode` to `logsdb` and enables the data stream lifecycle
+- maps `client.zone`, `server.zone`, `source.zone` and `destination.zone` as `keyword`
 
-If `logs@custom` (or the hook you pick) already exists, add the `pipeline` processor to it rather than replacing it.
+Before you apply it:
+
+- **It replaces any existing `logs@custom`.** If you already have one, merge the two. `setup.sh` skips this step when one exists.
+- **It takes effect at the next rollover.** Roll a data stream over (`POST logs-myapp-default/_rollover`) to pick it up straight away.
+- **Check data streams that already have a default pipeline.** A data stream whose template sets its own `index.default_pipeline` (integration data streams do) can end up with this one instead, skipping its normal parsing. For those, call `event_original_size` from the data stream's own `@custom` ingest pipeline instead:
+
+  ```
+  PUT _ingest/pipeline/logs-<dataset>@custom
+  {
+    "processors": [
+      { "pipeline": { "name": "event_original_size", "ignore_missing_pipeline": true } }
+    ]
+  }
+  ```
+
+For indices outside `logs-*-*`, set `index.default_pipeline` or `index.final_pipeline` to `event_original_size` on the index or its template.
 
 ## The dashboard
 

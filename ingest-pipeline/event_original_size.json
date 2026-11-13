@@ -5,7 +5,7 @@
       "script": {
         "ignore_failure": true,
         "description": "event.original if present",
-        "source": "if (ctx.event?.original != null) { ctx.raw.size = ctx.event.original.length(); }"
+        "source": "if (ctx.event?.original != null) { if (ctx.raw == null) ctx.raw = [:]; ctx.raw.size = ctx.event.original.length(); }"
       }
     },
     {

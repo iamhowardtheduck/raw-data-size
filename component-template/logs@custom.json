@@ -1,0 +1,57 @@
+{
+  "template": {
+    "lifecycle": {
+      "enabled": true
+    },
+    "mappings": {
+      "properties": {
+        "client": {
+          "type": "object",
+          "properties": {
+            "zone": {
+              "type": "keyword"
+            }
+          }
+        },
+        "destination": {
+          "type": "object",
+          "properties": {
+            "zone": {
+              "type": "keyword"
+            }
+          }
+        },
+        "raw": {
+          "type": "object",
+          "properties": {
+            "size": {
+              "type": "long"
+            }
+          }
+        },
+        "server": {
+          "type": "object",
+          "properties": {
+            "zone": {
+              "type": "keyword"
+            }
+          }
+        },
+        "source": {
+          "type": "object",
+          "properties": {
+            "zone": {
+              "type": "keyword"
+            }
+          }
+        }
+      }
+    },
+    "settings": {
+      "index": {
+        "default_pipeline": "event_original_size",
+        "mode": "logsdb"
+      }
+    }
+  }
+}
