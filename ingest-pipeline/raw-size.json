@@ -1,0 +1,33 @@
+{
+  "description": "Calculates raw.size (character length of the original event) for raw-vs-indexed size analysis",
+  "processors": [
+    {
+      "script": {
+        "ignore_failure": true,
+        "description": "event.original if present",
+        "source": "if (ctx.event?.original != null) { ctx.raw.size = ctx.event.original.length(); }"
+      }
+    },
+    {
+      "script": {
+        "ignore_failure": true,
+        "description": "message fallback",
+        "source": "if (ctx.containsKey('raw') && ctx.raw.size != null) return; if (ctx.message != null) { if (ctx.raw == null) ctx.raw = [:]; ctx.raw.size = ctx.message.length(); }"
+      }
+    },
+    {
+      "script": {
+        "ignore_failure": true,
+        "description": "query fallback",
+        "source": "if (ctx.containsKey('raw') && ctx.raw.size != null && ctx.containsKey('message') && ctx.message != null) return; if (ctx.query != null) { if (ctx.raw == null) ctx.raw = [:]; ctx.raw.size = ctx.query.length(); }"
+      }
+    },
+    {
+      "script": {
+        "ignore_failure": true,
+        "description": "_source fallback",
+        "source": "if (ctx.event?.original != null || ctx.message != null || ctx.query != null || ctx.raw != null) return;\nint size = ctx.toString().length();\nctx.raw = [:];\nctx.raw.size = size;"
+      }
+    }
+  ]
+}

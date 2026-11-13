@@ -1,0 +1,66 @@
+{
+  "source": {
+    "index": [
+      ".ds-metrics-elasticsearch.stack_monitoring.index-default-*"
+    ],
+    "query": {
+      "bool": {
+        "filter": [
+          {
+            "exists": {
+              "field": "elasticsearch.index.name"
+            }
+          },
+          {
+            "exists": {
+              "field": "elasticsearch.index.primaries.store.size_in_bytes"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "dest": {
+    "index": "monitoring-latest-lookup"
+  },
+  "frequency": "1m",
+  "sync": {
+    "time": {
+      "field": "@timestamp",
+      "delay": "60s"
+    }
+  },
+  "pivot": {
+    "group_by": {
+      "elasticsearch.index.name": {
+        "terms": {
+          "field": "elasticsearch.index.name"
+        }
+      }
+    },
+    "aggregations": {
+      "latest": {
+        "top_metrics": {
+          "metrics": [
+            {
+              "field": "elasticsearch.index.primaries.store.size_in_bytes"
+            },
+            {
+              "field": "elasticsearch.index.total.bulk.total_size_in_bytes"
+            },
+            {
+              "field": "@timestamp"
+            }
+          ],
+          "sort": {
+            "@timestamp": "desc"
+          },
+          "size": 1
+        }
+      }
+    }
+  },
+  "settings": {
+    "max_page_search_size": 500
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "settings": {
+    "index": {
+      "mode": "lookup"
+    }
+  },
+  "mappings": {
+    "properties": {
+      "elasticsearch": {
+        "properties": {
+          "index": {
+            "properties": {
+              "name": {
+                "type": "keyword"
+              }
+            }
+          }
+        }
+      },
+      "latest": {
+        "properties": {
+          "@timestamp": {
+            "type": "date"
+          },
+          "elasticsearch": {
+            "properties": {
+              "index": {
+                "properties": {
+                  "primaries": {
+                    "properties": {
+                      "store": {
+                        "properties": {
+                          "size_in_bytes": {
+                            "type": "long"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "total": {
+                    "properties": {
+                      "bulk": {
+                        "properties": {
+                          "total_size_in_bytes": {
+                            "type": "long"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
